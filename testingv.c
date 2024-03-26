@@ -4,72 +4,68 @@
 
 int main (int argc, char* argv[])
 {
-	bdd_manager bddm = bdd_init();	
+	bdd_manager bddm = bdd_init();
 
-	// make 3 variables x0,x1,x2 (in that order)
-	bdd x0 = bdd_new_var_last(bddm);
-	bdd x1 = bdd_new_var_last(bddm);
-	bdd x2 = bdd_new_var_last(bddm);
+	bdd x0 = bdd_new_var_last(bddm);//0
+	bdd x1 = bdd_new_var_last(bddm);//1
+	bdd x2 = bdd_new_var_last(bddm);//2
+	bdd x3 = bdd_new_var_last(bddm);//3
+	bdd y0 = bdd_new_var_last(bddm);//4
+	bdd y1 = bdd_new_var_last(bddm);//5
+	bdd y2 = bdd_new_var_last(bddm);//6
+	bdd y3 = bdd_new_var_last(bddm);//7	
 
-	// compute y = (x0.x1)+x2
-	bdd a  = bdd_and (bddm,x0,x1);	
-	bdd y  = bdd_or (bddm,x2,a);	
+	bdd s3 = bdd_new_var_last(bddm);//8
+	bdd s2 = bdd_new_var_last(bddm);//9
+	bdd s1 = bdd_new_var_last(bddm);//10
+	bdd s0 = bdd_new_var_last(bddm);//11
+	bdd cout =bdd_new_var_last(bddm);//12
 
-	// compute z = (x0 + x2).(x1 + x2)
-	bdd b = bdd_or (bddm, x0,x2);
-	bdd c = bdd_or (bddm, x1,x2);
-	bdd z = bdd_and (bddm, b, c);
+	bdd s0_tmp  = bdd_xor (bddm, x0, y0);
+	bdd c1 = bdd_and (bddm, x0, y0);
 
+	bdd s1_tmp  = bdd_xor (bddm, x1, bdd_xor (bddm, y1, c1));
+	bdd c2 = bdd_or(bddm, bdd_and (bddm, x1, y1), bdd_and(bddm, c1, bdd_xor(bddm, x1, y1)));
+
+	bdd s2_tmp  = bdd_xor (bddm, x2, bdd_xor (bddm, y2, c2));
+	bdd c3 = bdd_or(bddm, bdd_and (bddm, x2, y2), bdd_and(bddm, c2, bdd_xor(bddm, x2, y2)));
+
+	bdd s3_tmp  = bdd_xor (bddm, x3, bdd_xor (bddm, y3, c3));
+	bdd c0_tmp = bdd_or(bddm, bdd_and (bddm, x3, y3), bdd_and(bddm, c3, bdd_xor(bddm, x3,y3)));
 	
+	
+	bdd term1 = bdd_xnor(bddm, s0, s0_tmp);
+	bdd term2 = bdd_xnor(bddm, s1, s1_tmp);
+	bdd term3 = bdd_xnor(bddm, s2, s2_tmp);
+	bdd term4 = bdd_xnor(bddm, s3, s3_tmp);
+	bdd term5 = bdd_xnor(bddm,cout,c0_tmp);
 
-	printf("----------------------------------------------------\n");
+	bdd Xf = bdd_and(bddm, term1, bdd_and(bddm, term2, bdd_and(bddm, term3, bdd_and(bddm,term4,term5))));
 
-	// print y
-	bdd_print_bdd(bddm,y,NULL, NULL,NULL, stdout);
+	bdd inp_t1 = bdd_and(bddm, bdd_xor(bddm, x0, x1), bdd_xnor(bddm, x2, x3));
+	bdd inp_t2 = bdd_and(bddm, bdd_xor(bddm, x2, x3), bdd_xnor(bddm, x0, x1));
+	bdd inp1 = bdd_or(bddm, inp_t1, inp_t2);
 
-	// are z and y the same?
-	if (z == y)
-	{
-		printf("Equal\n");
-	}	
-	else
-	{
-		printf("Not Equal\n");
-		// print z
-		bdd_print_bdd(bddm,z,NULL, NULL,NULL, stdout);
-	}
+	bdd inp_t3 = bdd_and(bddm, bdd_xor(bddm, y0, y1), bdd_xnor(bddm, y2, y3));
+	bdd inp_t4 = bdd_and(bddm, bdd_xor(bddm, y2, y3), bdd_xnor(bddm, y0, y1));
+	bdd inp2 = bdd_or(bddm, inp_t3, inp_t4);
+	
+	bdd inp = bdd_and(bddm,inp1,inp2);
 
 
-	printf("----------------------------------------------------\n");
+	//Existentially quantification
+	bdd Qrmv[9];
+	Qrmv[0] = x0; Qrmv[1] = x1; Qrmv[2] = x2; Qrmv[3] = x3;
+	Qrmv[4] = y0; Qrmv[5] = y1; Qrmv[6] = y2; Qrmv[7] = y3; Qrmv[8] = NULL;
 
-	// compute w = (x0 + x2) + (x1 + x2)
-	bdd w = bdd_or (bddm, b,c);
-	bdd_print_bdd(bddm,w,NULL, NULL,NULL, stdout);
+	int exist_assoc = bdd_new_assoc(bddm,Qrmv,0);
 
-	// are w and y the same? of course not.
-	if (w == y)
-	{
-		printf("Equal\n");
-	}	
-	else
-	{
-		// you should get this.
-		printf("Not Equal\n");
-	}
+	bdd Inp_and_Xf = bdd_and(bddm, inp, Xf);
+	bdd_assoc(bddm, exist_assoc);
+	bdd out_image = bdd_exists(bddm, Inp_and_Xf);
 
-	printf("----------------------------------------------------\n");
-
-	// Existential quantification example.
-	bdd x4 = bdd_new_var_last(bddm);
-	bdd p = bdd_and(bddm, x4, z);
-	bdd Q[2];
-	Q[0] = x0; Q[1] = 0;
-	int assoc = bdd_new_assoc(bddm,Q,0);
-	bdd_assoc(bddm,assoc);
-
-	bdd pq = bdd_exists(bddm,p);
-	bdd_print_bdd(bddm,pq,NULL, NULL,NULL, stdout);
-
+	printf("\n-----------------\nBDD of Possible Outputs\n-----------------\n");
+	bdd_print_bdd(bddm, out_image, NULL, NULL,NULL, stdout);
+	printf("\n-----------------\n");
 	return(0);
 }
-
