@@ -1,1 +1,1 @@
-gcc  -o testingv testingv.c -I ../include -L ../lib -lbdd -lmem
+gcc  -o PART2 PART2.c -I ../include -L ../lib -lbdd -lmem
