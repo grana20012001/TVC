@@ -1,1 +1,1 @@
-gcc  -o PART2 PART2.c -I ../include -L ../lib -lbdd -lmem
+gcc  -o PART3 PART3.c -I ../include -L ../lib -lbdd -lmem
